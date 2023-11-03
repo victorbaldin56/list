@@ -1,0 +1,8 @@
+# Build folder
+build
+logs
+
+*.o
+*.a
+*.so
+*.out
