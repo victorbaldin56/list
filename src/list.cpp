@@ -7,32 +7,31 @@
 #include <string.h>
 #include <time.h>
 
-#include "dump.h"
-#include "recalloc.h"
-
 static const size_t REALLOC_COEFF = 2;
-static const int LR_BAD_REALLOC = -1;
+static const int LR_BAD_REALLOC =  -1;
 
 static int ListRealloc(struct List *list, size_t newsize);
 
-static inline size_t PutValToList(struct List *list, int val);
+static inline size_t ListAddValue(struct List *list, int val);
 
 int ListCtor(struct List *list, size_t size)
 {
     assert(list);
 
-    list->data = (int *)calloc(size, sizeof(*list->data));
-    list->prev = (size_t *)calloc(size, sizeof(*list->prev));
-    list->next = (size_t *)calloc(size, sizeof(*list->next));
+    list->data = (int *)    calloc(size, sizeof(*list->data));
+    list->prev = (ssize_t *)calloc(size, sizeof(*list->prev));
+    list->next = (size_t *) calloc(size, sizeof(*list->next));
     if (!list->data || !list->prev || !list->next)
         return LC_BAD_ALLOC;
 
     list->size = size;
-    list->head = list->tail = 0;
+    list->head = list->tail = 1;
     list->free = 1;
     for (size_t i = 1; i < size - 1; i++) {
+        list->prev[i] = -1;
         list->next[i] = i + 1;
     }
+    list->prev[size - 1] = -1;
 
     return 0;
 }
@@ -74,48 +73,55 @@ int ListDump(const struct List *list, const char *file, const char *func,
     assert(file);
     assert(func);
 
-    FILE *fp = HTCreateLog();
+    FILE *fp = fopen("dump.dot", "w");
     if (!fp) {
         perror("ListDump");
         return LD_FILE_CREATE_FAILED;
     }
-
-    fprintf(fp, "<!DOCTYPE html>\n");
-
-    fprintf(fp, "<pre>\nList dump from function %s, file %s, line %zu\n",
-            func, file, line);
-
-    fprintf(fp, "size: %zu\n", list->size);
-    fprintf(fp, "head: %zu\n", list->head);
-    fprintf(fp, "tail: %zu\n", list->tail);
-    fprintf(fp, "free: %zu\n", list->free);
-    fprintf(fp, "</pre>\n");
-
-    fprintf(fp, "data:\n");
-    HTDumpArray(fp, list->data, list->size);
-
-    fprintf(fp, "prev:\n");
-    HTDumpArray(fp, (int *)list->prev, list->size);
-
-    fprintf(fp, "next:\n");
-    HTDumpArray(fp, (int *)list->next, list->size);
-
+    fprintf(fp,
+            "digraph List {\n\trankdir = LR;\n\tnode [shape = record];\n");
+    fprintf(fp, "0 ");
+    for (size_t i = 0; i < list->size; i++) {
+        fprintf(fp, "-> %zu", i);
+    }
+    fprintf(fp, "[arrowsize = 0.0, weight = 10000, color = \"#FFFFFF\"];\n");
+    for (size_t i = 0; i < list->size; i++) {
+        fprintf(fp, "\t%zu [shape = Mrecord, "
+                "style = filled, ", i);
+        if (list->prev[i] == -1)
+            fprintf(fp, "fillcolor = cyan, ");
+        else if (i != 0)
+            fprintf(fp, "fillcolor = orange, ");
+        else
+            fprintf(fp, "fillcolor = red, ");
+        fprintf(fp,  "label = \"idx: %zu | data: %d | next: %zu | "
+                "prev: %zd\"];\n",
+                i, list->data[i], list->next[i], list->prev[i]);
+    }
+    for (size_t i = 0; i < list->size; i++) {
+        fprintf(fp, "\t%zu -> %zu;\n", i, list->next[i]);
+    }
+    fprintf(fp, "\tlabel = \"ListDump from function %s, %s:%zu\";\n"
+            "All[shape = Mrecord, label = \"size = %zu | head = %zu |"
+            " tail = %zu | free = %zu\"];}\n",
+            func, file, line,
+            list->size, list->head, list->tail, list->free);
     fclose(fp);
+    system("dot -T png dump.dot -o dump.png");
+
     return 0;
 }
 
 size_t ListInsertAtTail(struct List *list, int val)
 {
-    size_t curidx = ListInsertAfter(list, val, list->tail);
-    list->tail = curidx;
-    return curidx;
+    list->tail = ListInsertAfter(list, val, list->tail);
+    return list->tail;
 }
 
 size_t ListInsertAtHead(struct List *list, int val)
 {
-    size_t curidx = ListInsertBefore(list, val, list->head);
-    list->head = curidx;
-    return curidx;
+    list->head = ListInsertBefore(list, val, list->head);
+    return list->head;
 }
 
 size_t ListInsertAfter(struct List *list, int val, size_t idx)
@@ -123,7 +129,7 @@ size_t ListInsertAfter(struct List *list, int val, size_t idx)
     if (ListVerify(list) != LIST_OK)
         return 0;
 
-    size_t curidx = PutValToList(list, val);
+    size_t curidx = ListAddValue(list, val);
     list->next[idx] = curidx;
     list->prev[curidx] = idx;
     return curidx;
@@ -134,7 +140,7 @@ size_t ListInsertBefore(struct List *list, int val, size_t idx)
     if (ListVerify(list) != LIST_OK)
         return 0;
 
-    size_t curidx = PutValToList(list, val);
+    size_t curidx = ListAddValue(list, val);
     list->prev[idx] = curidx;
     list->next[curidx] = idx;
     return curidx;
@@ -142,12 +148,12 @@ size_t ListInsertBefore(struct List *list, int val, size_t idx)
 
 static int ListRealloc(struct List *list, size_t newsize)
 {
-    int    *newdata = (int *)   __recalloc(list->data, newsize,
-                                           sizeof(*list->data));
-    size_t *newprev = (size_t *)__recalloc(list->prev, newsize,
-                                           sizeof(*list->prev));
-    size_t *newnext = (size_t *)__recalloc(list->next, newsize,
-                                           sizeof(*list->next));
+    int    *newdata  = (int *)    realloc(list->data,
+                                          newsize * sizeof(*list->data));
+    ssize_t *newprev = (ssize_t *)realloc(list->prev,
+                                          newsize * sizeof(*list->prev));
+    size_t *newnext  = (size_t *) realloc(list->next,
+                                          newsize * sizeof(*list->next));
     if (!newdata || !newprev || !newprev)
         return LR_BAD_REALLOC;
 
@@ -159,7 +165,7 @@ static int ListRealloc(struct List *list, size_t newsize)
     return 0;
 }
 
-static inline size_t PutValToList(struct List *list, int val)
+static inline size_t ListAddValue(struct List *list, int val)
 {
     if (!list->free) {
         if (ListRealloc(list, list->size * REALLOC_COEFF) != 0)

@@ -2,10 +2,11 @@
 #define LIST_LIST_H_
 
 #include <stddef.h>
+#include <sys/types.h>
 
 struct List {
     int *data;
-    size_t *prev;
+    ssize_t *prev;
     size_t *next;
     size_t head;
     size_t tail;
@@ -51,4 +52,4 @@ size_t ListInsertAfter(struct List *list, int val, size_t idx);
 
 size_t ListInsertBefore(struct List *list, int val, size_t idx);
 
-#endif // LIST_LIST_H_
+#endif
