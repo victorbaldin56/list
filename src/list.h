@@ -21,11 +21,16 @@ int ListCtor(struct List *list, size_t size);
 void ListDtor(struct List *list);
 
 enum ListErrors {
-    LIST_NOT_RINGED = -4,
-    LIST_DATA_NULL  = -3,
-    LIST_PREV_NULL  = -2,
-    LIST_NEXT_NULL  = -1,
-    LIST_OK         =  0,
+    LIST_SIZE_NEGATIVE = -9,
+    LIST_TAIL_NEGATIVE = -8,
+    LIST_HEAD_NEGATIVE = -7,
+    LIST_FREE_NEGATIVE = -6,
+    LIST_NEXT_NEGATIVE = -5,
+    LIST_NOT_RINGED    = -4,
+    LIST_DATA_NULL     = -3,
+    LIST_PREV_NULL     = -2,
+    LIST_NEXT_NULL     = -1,
+    LIST_OK            =  0,
 };
 
 ListErrors ListVerify(const struct List *list);

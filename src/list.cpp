@@ -59,9 +59,20 @@ ListErrors ListVerify(const struct List *list)
         return LIST_PREV_NULL;
     if (!list->next)
         return LIST_NEXT_NULL;
-
     if (list->next[0] != 0)
         return LIST_NOT_RINGED;
+    for (ssize_t i = 0; i < list->size; i++) {
+        if (list->next[i] < 0)
+            return LIST_NEXT_NEGATIVE;
+    }
+    if (list->free < 0)
+        return LIST_FREE_NEGATIVE;
+    if (list->head < 0)
+        return LIST_HEAD_NEGATIVE;
+    if (list->tail < 0)
+        return LIST_TAIL_NEGATIVE;
+    if (list->size < 0)
+        return LIST_SIZE_NEGATIVE;
 
     return LIST_OK;
 }
@@ -188,8 +199,8 @@ void ListDeleteFromTail(struct List *list)
 
 static int ListRealloc(struct List *list, size_t newsize)
 {
-    int     *newdata  = (int *)   realloc(list->data,
-                                          newsize * sizeof(*list->data));
+    int     *newdata = (int *)   realloc(list->data,
+                                         newsize * sizeof(*list->data));
     ssize_t *newprev = (ssize_t *)realloc(list->prev,
                                           newsize * sizeof(*list->prev));
     ssize_t *newnext = (ssize_t *)realloc(list->next,
