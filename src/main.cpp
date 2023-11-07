@@ -18,6 +18,11 @@ int main()
     ListInsertAtHead(&list, -20);
     ListDeleteFromTail(&list);
     ListDeleteFromTail(&list);
+    ListInsertAfter(&list, 100, 4);
+    ListInsertAtHead(&list, -98);
+    ListInsertBefore(&list, -1, 1);
+    ListDeleteBefore(&list, 3);
+    ListDeleteBefore(&list, 4);
     LIST_DUMP(&list);
 
     ListDtor(&list);

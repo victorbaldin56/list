@@ -49,16 +49,18 @@ int ListDump(const struct List *list, const char *file, const char *func,
 #define LIST_DUMP(list) ;
 #endif
 
-int *ListInsertAtTail(struct List *list, int val);
+ssize_t ListInsertAtTail(struct List *list, int val);
 
-int *ListInsertAtHead(struct List *list, int val);
+ssize_t ListInsertAtHead(struct List *list, int val);
 
-int *ListInsertAfter(struct List *list, int val, ssize_t idx);
+ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx);
 
-int *ListInsertBefore(struct List *list, int val, ssize_t idx);
+ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx);
 
 void ListDeleteFromHead(struct List *list);
 
 void ListDeleteFromTail(struct List *list);
+
+void ListDeleteBefore(struct List *list, ssize_t idx);
 
 #endif

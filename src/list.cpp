@@ -95,7 +95,7 @@ int ListDump(const struct List *list, const char *file, const char *func,
     for (ssize_t i = 0; i < list->size; i++) {
         fprintf(fp, "-> %zd", i);
     }
-    fprintf(fp, "[arrowsize = 0.0, weight = 10000, color = \"#FFFFFF\"];\n");
+    fprintf(fp, "[arrowsize = 0.0, weight = 100000, color = \"#FFFFFF\"];\n");
     for (ssize_t i = 0; i < list->size; i++) {
         fprintf(fp, "\t%zd [shape = Mrecord, "
                 "style = filled, ", i);
@@ -127,50 +127,64 @@ int ListDump(const struct List *list, const char *file, const char *func,
     return 0;
 }
 
-int *ListInsertAtTail(struct List *list, int val)
+ssize_t ListInsertAtTail(struct List *list, int val)
 {
-    ssize_t tailidx = ListAddValue(list, val);
-    list->next[tailidx] = 0;
-    list->prev[tailidx] = list->tail;
-    list->next[list->tail] = tailidx;
-    list->tail = tailidx;
-    return list->data + list->tail;
+    return ListInsertAfter(list, val, list->tail);
 }
 
-int *ListInsertAtHead(struct List *list, int val)
+ssize_t ListInsertAtHead(struct List *list, int val)
 {
-    ssize_t headidx = ListAddValue(list, val);
-    list->prev[headidx] = 0;
-    list->next[headidx] = list->head;
-    list->prev[list->head] = headidx;
-    list->head = headidx;
-    return list->data + list->head;
+    return ListInsertBefore(list, val, list->head);
 }
 
-int *ListInsertAfter(struct List *list, int val, ssize_t idx)
+ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx)
 {
     if (ListVerify(list) != LIST_OK)
         return 0;
-    if (list->prev[idx] == -1)
-        return 0;
 
     ssize_t curidx = ListAddValue(list, val);
+    if (idx == list->tail) {
+        list->tail = curidx;
+        list->next[list->tail] = 0;
+    }
+    list->next[curidx] = list->next[idx];
+    list->prev[list->next[idx]] = curidx;
     list->next[idx] = curidx;
     list->prev[curidx] = idx;
-    return list->data + curidx;
+    return curidx;
 }
 
-int *ListInsertBefore(struct List *list, int val, ssize_t idx)
+ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx)
 {
     if (ListVerify(list) != LIST_OK)
         return 0;
-    if (list->prev[idx] == -1)
-        return 0;
 
     ssize_t curidx = ListAddValue(list, val);
+    if (idx == list->head) {
+        list->head = curidx;
+        list->prev[list->head] = 0;
+    } else {
+        list->next[list->prev[idx]] = curidx;
+    }
+    list->prev[curidx] = list->prev[idx];
     list->prev[idx] = curidx;
     list->next[curidx] = idx;
-    return list->data + curidx;
+    return curidx;
+}
+
+void ListDeleteBefore(struct List *list, ssize_t idx)
+{
+    assert(list);
+
+    if (list->prev[idx] == list->head) {
+        list->head = list->next[list->head];
+    }
+    ssize_t delidx = list->prev[list->prev[idx]];
+    list->next[list->prev[idx]] = list->free;
+    list->free = list->prev[idx];
+    list->prev[list->prev[idx]] = -1;
+    list->prev[idx] = delidx;
+    list->next[delidx] = idx;
 }
 
 void ListDeleteFromHead(struct List *list)
