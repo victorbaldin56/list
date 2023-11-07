@@ -7,11 +7,11 @@
 struct List {
     int *data;
     ssize_t *prev;
-    size_t *next;
-    size_t head;
-    size_t tail;
-    size_t free;
-    size_t size;
+    ssize_t *next;
+    ssize_t head;
+    ssize_t tail;
+    ssize_t free;
+    ssize_t size;
 };
 
 const int LC_BAD_ALLOC = -1;
@@ -44,12 +44,16 @@ int ListDump(const struct List *list, const char *file, const char *func,
 #define LIST_DUMP(list) ;
 #endif
 
-size_t ListInsertAtTail(struct List *list, int val);
+int *ListInsertAtTail(struct List *list, int val);
 
-size_t ListInsertAtHead(struct List *list, int val);
+int *ListInsertAtHead(struct List *list, int val);
 
-size_t ListInsertAfter(struct List *list, int val, size_t idx);
+int *ListInsertAfter(struct List *list, int val, ssize_t idx);
 
-size_t ListInsertBefore(struct List *list, int val, size_t idx);
+int *ListInsertBefore(struct List *list, int val, ssize_t idx);
+
+void ListDeleteFromHead(struct List *list);
+
+void ListDeleteFromTail(struct List *list);
 
 #endif

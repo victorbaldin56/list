@@ -14,8 +14,10 @@ int main()
 
     ListInsertAtHead(&list, 90);
     ListInsertAtTail(&list, 80);
-    ListInsertAfter(&list, 100, 18);
-    ListInsertAfter(&list, -10, 10);
+    ListInsertAtHead(&list, -10);
+    ListInsertAtHead(&list, -20);
+    ListDeleteFromTail(&list);
+    ListDeleteFromTail(&list);
     LIST_DUMP(&list);
 
     ListDtor(&list);
