@@ -2,7 +2,7 @@
 
 #include "list.h"
 
-const size_t LIST_INITIAL_SIZE = 20;
+const size_t LIST_INITIAL_SIZE = 5;
 
 int main()
 {

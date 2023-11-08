@@ -61,8 +61,6 @@ ListErrors ListVerify(const struct List *list)
         return LIST_PREV_NULL;
     if (!list->next)
         return LIST_NEXT_NULL;
-    if (list->next[0] != 0)
-        return LIST_NOT_RINGED;
     for (ssize_t i = 0; i < list->size; i++) {
         if (list->next[i] < 0)
             return LIST_NEXT_NEGATIVE;
@@ -236,6 +234,13 @@ static int ListRealloc(struct List *list, size_t newsize)
     list->data = newdata;
     list->prev = newprev;
     list->next = newnext;
+    list->free = list->size;
+    for (ssize_t i = list->size; i < newsize - 1; i++) {
+        list->next[i] = i + 1;
+        list->prev[i] = -1;
+    }
+    list->next[newsize - 1] = 0;
+    list->prev[newsize - 1] = -1;
 
     list->size = (ssize_t)newsize;
     return 0;
