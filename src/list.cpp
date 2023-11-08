@@ -177,26 +177,25 @@ void ListDeleteBefore(struct List *list, ssize_t idx)
     assert(list);
 
     if (list->prev[idx] == list->head) {
+        list->prev[list->head] = -1;
+        ssize_t headidx = list->head;
         list->head = list->next[list->head];
+        list->next[headidx] = list->free;
+        list->prev[list->head] = 0;
+        list->free = headidx;
+    } else {
+        ssize_t delidx = list->prev[list->prev[idx]];
+        list->next[list->prev[idx]] = list->free;
+        list->free = list->prev[idx];
+        list->prev[list->prev[idx]] = -1;
+        list->prev[idx] = delidx;
+        list->next[delidx] = idx;
     }
-    ssize_t delidx = list->prev[list->prev[idx]];
-    list->next[list->prev[idx]] = list->free;
-    list->free = list->prev[idx];
-    list->prev[list->prev[idx]] = -1;
-    list->prev[idx] = delidx;
-    list->next[delidx] = idx;
 }
 
 void ListDeleteFromHead(struct List *list)
 {
-    assert(list);
-
-    list->prev[list->head] = -1;
-    ssize_t headidx = list->head;
-    list->head = list->next[list->head];
-    list->next[headidx] = list->free;
-    list->prev[list->head] = 0;
-    list->free = headidx;
+    ListDeleteBefore(list, list->next[list->head]);
 }
 
 void ListDeleteFromTail(struct List *list)
