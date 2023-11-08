@@ -14,6 +14,8 @@ static int ListRealloc(struct List *list, size_t newsize);
 
 static inline ssize_t ListAddValue(struct List *list, int val);
 
+static inline void ListFreeNode(struct List *list, ssize_t idx);
+
 int ListCtor(struct List *list, size_t size)
 {
     assert(list);
@@ -172,6 +174,16 @@ ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx)
     return curidx;
 }
 
+void ListDeleteFromHead(struct List *list)
+{
+    ListDeleteBefore(list, list->next[list->head]);
+}
+
+void ListDeleteFromTail(struct List *list)
+{
+    ListDeleteAfter(list, list->prev[list->tail]);
+}
+
 void ListDeleteBefore(struct List *list, ssize_t idx)
 {
     assert(list);
@@ -185,29 +197,29 @@ void ListDeleteBefore(struct List *list, ssize_t idx)
         list->free = headidx;
     } else {
         ssize_t delidx = list->prev[list->prev[idx]];
-        list->next[list->prev[idx]] = list->free;
-        list->free = list->prev[idx];
-        list->prev[list->prev[idx]] = -1;
+        ListFreeNode(list, list->prev[idx]);
         list->prev[idx] = delidx;
         list->next[delidx] = idx;
     }
 }
 
-void ListDeleteFromHead(struct List *list)
-{
-    ListDeleteBefore(list, list->next[list->head]);
-}
-
-void ListDeleteFromTail(struct List *list)
+void ListDeleteAfter(struct List *list, ssize_t idx)
 {
     assert(list);
 
-    ssize_t tailidx = list->tail;
-    list->tail = list->prev[list->tail];
-    list->next[tailidx] = list->free;
-    list->prev[tailidx] = -1;
-    list->next[list->tail] = 0;
-    list->free = tailidx;
+    if (list->next[idx] == list->tail) {
+        ssize_t tailidx = list->tail;
+        list->tail = list->prev[list->tail];
+        list->next[tailidx] = list->free;
+        list->prev[tailidx] = -1;
+        list->next[list->tail] = 0;
+        list->free = tailidx;
+    } else {
+        ssize_t delidx = list->next[list->next[idx]];
+        ListFreeNode(list, list->next[idx]);
+        list->next[idx] = delidx;
+        list->prev[delidx] = idx;
+    }
 }
 
 static int ListRealloc(struct List *list, size_t newsize)
@@ -239,4 +251,13 @@ static inline ssize_t ListAddValue(struct List *list, int val)
     list->free = list->next[curidx];
     list->data[curidx] = val;
     return curidx;
+}
+
+static inline void ListFreeNode(struct List *list, ssize_t idx)
+{
+    assert(list);
+
+    list->prev[idx] = -1;
+    list->next[idx] = list->free;
+    list->free = idx;
 }

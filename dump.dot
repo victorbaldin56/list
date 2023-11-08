@@ -5,9 +5,9 @@ digraph List {
 	0 [shape = Mrecord, style = filled, fillcolor = red, label = "idx: 0 | data: 0 | next: 0 | prev: 2"];
 	1 [shape = Mrecord, style = filled, fillcolor = cyan, label = "idx: 1 | data: 100 | next: 6 | prev: -1"];
 	2 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 2 | data: 666 | next: 0 | prev: 3"];
-	3 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 3 | data: -10 | next: 2 | prev: 5"];
-	4 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 4 | data: -20 | next: 5 | prev: 0"];
-	5 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 5 | data: -1 | next: 3 | prev: 4"];
+	3 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 3 | data: -10 | next: 2 | prev: 4"];
+	4 [shape = Mrecord, style = filled, fillcolor = orange, label = "idx: 4 | data: -20 | next: 3 | prev: 0"];
+	5 [shape = Mrecord, style = filled, fillcolor = cyan, label = "idx: 5 | data: -1 | next: 1 | prev: -1"];
 	6 [shape = Mrecord, style = filled, fillcolor = cyan, label = "idx: 6 | data: 0 | next: 7 | prev: -1"];
 	7 [shape = Mrecord, style = filled, fillcolor = cyan, label = "idx: 7 | data: 0 | next: 8 | prev: -1"];
 	8 [shape = Mrecord, style = filled, fillcolor = cyan, label = "idx: 8 | data: 0 | next: 9 | prev: -1"];
@@ -26,8 +26,8 @@ digraph List {
 	1 -> 6;
 	2 -> 0;
 	3 -> 2;
-	4 -> 5;
-	5 -> 3;
+	4 -> 3;
+	5 -> 1;
 	6 -> 7;
 	7 -> 8;
 	8 -> 9;
@@ -44,8 +44,7 @@ digraph List {
 	19 -> 0;
 	0 -> 2;
 	2 -> 3;
-	3 -> 5;
+	3 -> 4;
 	4 -> 0;
-	5 -> 4;
-	label = "ListDump from function main, src/main.cpp:27";
-All[shape = Mrecord, label = "size = 20 | head = 4 | tail = 2 | free = 1"];}
+	label = "ListDump from function main, src/main.cpp:28";
+All[shape = Mrecord, label = "size = 20 | head = 4 | tail = 2 | free = 5"];}

@@ -63,4 +63,6 @@ void ListDeleteFromTail(struct List *list);
 
 void ListDeleteBefore(struct List *list, ssize_t idx);
 
+void ListDeleteAfter(struct List *list, ssize_t idx);
+
 #endif

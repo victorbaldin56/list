@@ -24,6 +24,7 @@ int main()
     ListDeleteBefore(&list, 3);
     ListDeleteBefore(&list, 4);
     ListInsertAtTail(&list, 666);
+    ListDeleteAfter(&list, 4);
     LIST_DUMP(&list);
 
     ListDtor(&list);
