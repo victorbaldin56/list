@@ -27,6 +27,11 @@ int main()
     ListDeleteAfter(&list, 4);
     LIST_DUMP(&list);
 
+    ssize_t i = ListFind(&list, 2);
+    printf("The second list element: (%zd, %d)\n",
+           i, list.data[i]);
+
+    printf("-10 is here: %zd\n", __ListSlowSlowLinearSearch__(&list, -10));
     ListDtor(&list);
     return 0;
 }

@@ -220,6 +220,26 @@ void ListDeleteAfter(struct List *list, ssize_t idx)
     }
 }
 
+ssize_t ListFind(const struct List *list, size_t elnum)
+{
+    assert(list);
+
+    ssize_t j = list->head;
+    for (size_t i = 0; i < elnum - 1; i++) {
+        j = list->next[j];
+    }
+    return j;
+}
+
+ssize_t __ListSlowSlowLinearSearch__(const struct List *list, int val)
+{
+    ssize_t j = list->head;
+    for ( ; list->data[j] != val; ) {
+        j = list->next[j];
+    }
+    return j;
+}
+
 static int ListRealloc(struct List *list, size_t newsize)
 {
     int     *newdata = (int *)   realloc(list->data,
