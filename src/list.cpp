@@ -23,9 +23,12 @@ int ListCtor(struct List *list, size_t size)
     list->data = (int *)    calloc(size, sizeof(*list->data));
     list->prev = (ssize_t *)calloc(size, sizeof(*list->prev));
     list->next = (ssize_t *)calloc(size, sizeof(*list->next));
-    if (!list->data || !list->prev || !list->next)
+    if (!list->data || !list->prev || !list->next) {
+        free(list->data);
+        free(list->prev);
+        free(list->next);
         return LC_BAD_ALLOC;
-
+    }
     list->size = (ssize_t)size;
     list->head = list->tail = 1;
     list->free = 1;
@@ -38,14 +41,16 @@ int ListCtor(struct List *list, size_t size)
     return 0;
 }
 
+#define LIST_ASSERT(list) {                             \
+    assert(ListVerify(list) == LIST_OK);                \
+}
+
 void ListDtor(struct List *list)
 {
-    assert(list);
-
+    LIST_ASSERT(list);
     free(list->data);
     free(list->prev);
     free(list->next);
-
     list->data = NULL;
     list->prev = NULL;
     list->next = NULL;
@@ -54,7 +59,6 @@ void ListDtor(struct List *list)
 ListErrors ListVerify(const struct List *list)
 {
     assert(list);
-
     if (!list->data)
         return LIST_DATA_NULL;
     if (!list->prev)
@@ -81,9 +85,7 @@ int ListDump(const struct List *list, const char *file, const char *func,
              size_t line)
 {
     assert(list);
-    assert(file);
-    assert(func);
-
+    assert(file && func);
     FILE *fp = fopen("dump.dot", "w");
     if (!fp) {
         perror("ListDump");
@@ -139,9 +141,7 @@ ssize_t ListInsertAtHead(struct List *list, int val)
 
 ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx)
 {
-    if (ListVerify(list) != LIST_OK)
-        return 0;
-
+    LIST_ASSERT(list);
     ssize_t curidx = ListAddValue(list, val);
     if (idx == list->tail) {
         list->tail = curidx;
@@ -156,9 +156,7 @@ ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx)
 
 ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx)
 {
-    if (ListVerify(list) != LIST_OK)
-        return 0;
-
+    LIST_ASSERT(list);
     ssize_t curidx = ListAddValue(list, val);
     if (idx == list->head) {
         list->head = curidx;
@@ -184,8 +182,7 @@ void ListDeleteFromTail(struct List *list)
 
 void ListDeleteBefore(struct List *list, ssize_t idx)
 {
-    assert(list);
-
+    LIST_ASSERT(list);
     if (list->prev[idx] == list->head) {
         list->prev[list->head] = -1;
         ssize_t headidx = list->head;
@@ -203,8 +200,7 @@ void ListDeleteBefore(struct List *list, ssize_t idx)
 
 void ListDeleteAfter(struct List *list, ssize_t idx)
 {
-    assert(list);
-
+    LIST_ASSERT(list);
     if (list->next[idx] == list->tail) {
         ssize_t tailidx = list->tail;
         list->tail = list->prev[list->tail];
@@ -222,8 +218,7 @@ void ListDeleteAfter(struct List *list, ssize_t idx)
 
 ssize_t ListFind(const struct List *list, size_t elnum)
 {
-    assert(list);
-
+    LIST_ASSERT(list);
     ssize_t j = list->head;
     for (size_t i = 0; i < elnum - 1; i++) {
         j = list->next[j];
@@ -233,6 +228,7 @@ ssize_t ListFind(const struct List *list, size_t elnum)
 
 ssize_t __ListSlowSlowLinearSearch__(const struct List *list, int val)
 {
+    LIST_ASSERT(list);
     ssize_t j = list->head;
     for ( ; list->data[j] != val; ) {
         j = list->next[j];
@@ -242,6 +238,7 @@ ssize_t __ListSlowSlowLinearSearch__(const struct List *list, int val)
 
 static int ListRealloc(struct List *list, size_t newsize)
 {
+    LIST_ASSERT(list);
     int     *newdata = (int *)   realloc(list->data,
                                          newsize * sizeof(*list->data));
     ssize_t *newprev = (ssize_t *)realloc(list->prev,
@@ -268,6 +265,7 @@ static int ListRealloc(struct List *list, size_t newsize)
 
 static inline ssize_t ListAddValue(struct List *list, int val)
 {
+    LIST_ASSERT(list);
     if (!list->free) {
         if (ListRealloc(list, (size_t)list->size * REALLOC_COEFF) != 0)
             return 0;
@@ -280,9 +278,10 @@ static inline ssize_t ListAddValue(struct List *list, int val)
 
 static inline void ListFreeNode(struct List *list, ssize_t idx)
 {
-    assert(list);
-
+    LIST_ASSERT(list);
     list->prev[idx] = -1;
     list->next[idx] = list->free;
     list->free = idx;
 }
+
+#undef LIST_ASSERT

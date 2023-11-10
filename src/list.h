@@ -59,10 +59,9 @@ int ListDump(const struct List *list, const char *file, const char *func,
              size_t line);
 
 #ifndef NDEBUG
-#define LIST_DUMP(list)                                 \
-    do {                                                \
-        ListDump(list, __FILE__, __func__, __LINE__);   \
-    } while (0);
+#define LIST_DUMP(list) {                               \
+    ListDump(list, __FILE__, __func__, __LINE__);       \
+}
 #else
 #define LIST_DUMP(list) ;
 #endif
