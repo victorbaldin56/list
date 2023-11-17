@@ -11,7 +11,7 @@
  * @details All new list structures should be created
  * with constructor function, like this:
  * @code struct List list;
- *  if (ListCtor(&list, size) != 0) // initial list size that you want to set
+ *  if (ListCtor(&list) != 0) // initial list size that you want to set
  *      fprintf(stderr, "list alloc failed\n"); // ERROR handling
  * @endcode
  * Checking constructor return value is ABSOLUTELY needed, because there is
@@ -29,15 +29,13 @@ struct List {
     int *data;      ///< data array
     ssize_t *prev;  ///< previous indexes array
     ssize_t *next;  ///< next indexes array
-    ssize_t head;   ///< head of the list
-    ssize_t tail;   ///< tail of the list
     ssize_t free;   ///< the first free element of the list
     ssize_t size;   ///< size of the list
 };
 
 const int LC_BAD_ALLOC = -1;
 
-int ListCtor(struct List *list, size_t size);
+int ListCtor(struct List *list);
 
 void ListDtor(struct List *list);
 
@@ -56,14 +54,6 @@ enum ListErrors {
 ListErrors ListVerify(const struct List *list);
 
 const int LD_FILE_CREATE_FAILED = -2;
-
-#ifndef NDEBUG
-#define LIST_DUMP(list) {                               \
-    ListDump(list, __FILE__, __func__, __LINE__);       \
-}
-#else
-#define LIST_DUMP(list) ;
-#endif
 
 /** @name ListInsert
  * @brief Insert a value to the list

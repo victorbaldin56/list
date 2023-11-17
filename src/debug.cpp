@@ -28,35 +28,36 @@ inline static FILE *CreateLogFile(char *path_to_dot_src)
 static void DotDump(const struct List *list, char *path_to_dot);
 
 void ListDump(const struct List *list, const char *file, const char *func,
-              size_t line)
+              size_t line, const char *message)
 {
     assert(list);
-    assert(file && func);
+    assert(file && func && message);
     system("mkdir -p logs");
-    FILE *fp = fopen("logs/dump.html", "a+");
+    FILE *fp = fopen("logs/dump.html", "a");
     if (!fp) {
         perror("ListDump");
         return;
     }
-    fprintf(fp, "<pre>------------------------------------------------\n"
-                "-------------------------------------------------</pre>\n");
-    fprintf(fp, "<h4>ListDump from function %s, %s:%zu \n"
-                "size = %zd | head = %zd |"
-                " tail = %zd | free = %zd\n</h4>",
-                func, file, line,
-                list->size, list->head, list->tail, list->free);
-    char filename[FILENAME_MAX] = {};
-    DotDump(list, filename);
+    fprintf(fp, "<h2>===============================================</br>\n"
+                "===============================================</h2>\n");
+    fprintf(fp, "<h2>ListDump from function %s, %s:%zu</h2>"
+                "size = %zd</br>free = %zd\n",
+                func, file, line, list->size, list->free);
+    char src_filename[FILENAME_MAX] = {};
+    DotDump(list, src_filename);
     long cmd_size = __sysconf(_SC_ARG_MAX);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
     char *cmd = (char *)calloc(cmd_size, sizeof(*cmd));
     snprintf(cmd, cmd_size, "dot -T png %s -o %s.png",
-                            filename, filename);
+                            src_filename, src_filename);
 #pragma GCC diagnostic pop
     system(cmd);
     free(cmd);
-    fprintf(fp, "<img src=\"%s.png\"/>", filename + sizeof("logs/") - 1);
+    fprintf(fp, "<figure> <img src=\"%s.png\"/><figcaption>%s</br>"
+                "source file: %s"
+                "</figcaption></figure>",
+                src_filename + sizeof("logs/") - 1, message, src_filename);
     return;
 }
 
