@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#include "debug.h"
+
 /**
  * @brief doubly-linked list implementation based on 3 arrays
  * @details All new list structures should be created
@@ -54,9 +56,6 @@ enum ListErrors {
 ListErrors ListVerify(const struct List *list);
 
 const int LD_FILE_CREATE_FAILED = -2;
-
-int ListDump(const struct List *list, const char *file, const char *func,
-             size_t line);
 
 #ifndef NDEBUG
 #define LIST_DUMP(list) {                               \

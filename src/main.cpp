@@ -12,7 +12,10 @@ int main()
         return LC_BAD_ALLOC;
     }
 
+    LIST_DUMP(&list);
+
     ListInsertAtHead(&list, 90);
+    LIST_DUMP(&list);
     ListInsertAtTail(&list, 80);
     ListInsertAtHead(&list, -10);
     ListInsertAtHead(&list, -20);

@@ -81,55 +81,6 @@ ListErrors ListVerify(const struct List *list)
     return LIST_OK;
 }
 
-int ListDump(const struct List *list, const char *file, const char *func,
-             size_t line)
-{
-    assert(list);
-    assert(file && func);
-    FILE *fp = fopen("dump.dot", "w");
-    if (!fp) {
-        perror("ListDump");
-        return LD_FILE_CREATE_FAILED;
-    }
-    fprintf(fp,
-            "digraph List {\n\trankdir = LR;\n\tnode [shape = Mrecord];\n");
-    fprintf(fp, "0 ");
-    for (ssize_t i = 0; i < list->size; i++) {
-        fprintf(fp, "-> %zd", i);
-    }
-    fprintf(fp, "[arrowsize = 0.0, weight = 100000, color = \"#FFFFFF\"];\n");
-    for (ssize_t i = 0; i < list->size; i++) {
-        fprintf(fp, "\t%zd [shape = Mrecord, "
-                "style = filled, ", i);
-        if (list->prev[i] == -1)
-            fprintf(fp, "fillcolor = cyan, ");
-        else if (i != 0)
-            fprintf(fp, "fillcolor = orange, ");
-        else
-            fprintf(fp, "fillcolor = red, ");
-
-        fprintf(fp,  "label = \"idx: %zd | data: %d | next: %zd | "
-                "prev: %zd\"];\n",
-                i, list->data[i], list->next[i], list->prev[i]);
-    }
-    for (ssize_t i = 0; i < list->size; i++) {
-        fprintf(fp, "\t%zd -> %zd;\n", i, list->next[i]);
-    }
-    for (ssize_t i = 0; i < list->size; i++) {
-        if (list->prev[i] != -1)
-            fprintf(fp, "\t%zd -> %zd;\n", i, list->prev[i]);
-    }
-    fprintf(fp, "\tlabel = \"ListDump from function %s, %s:%zu\";\n"
-            "All[shape = Mrecord, label = \"size = %zd | head = %zd |"
-            " tail = %zd | free = %zd\"];}\n",
-            func, file, line,
-            list->size, list->head, list->tail, list->free);
-    fclose(fp);
-    system("dot -T png dump.dot -o dump.png");
-
-    return 0;
-}
-
 ssize_t ListInsertAtTail(struct List *list, int val)
 {
     return ListInsertAfter(list, val, list->tail);
@@ -253,10 +204,13 @@ static int ListRealloc(struct List *list, size_t newsize)
     list->prev = newprev;
     list->next = newnext;
     list->free = list->size;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
     for (ssize_t i = list->size; i < newsize - 1; i++) {
         list->next[i] = i + 1;
         list->prev[i] = -1;
     }
+#pragma GCC diagnostic pop
     list->next[newsize - 1] = 0;
     list->prev[newsize - 1] = -1;
 
