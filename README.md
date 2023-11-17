@@ -1,6 +1,6 @@
 # List
 Doubly-linked list implementation based on arrays.
-![image](dump.png)
+![image](example.png)
 
 ## Supported features
 1. Insertion value to any place of the list.
