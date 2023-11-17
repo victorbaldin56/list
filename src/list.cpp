@@ -107,6 +107,7 @@ int ListDump(const struct List *list, const char *file, const char *func,
             fprintf(fp, "fillcolor = orange, ");
         else
             fprintf(fp, "fillcolor = red, ");
+
         fprintf(fp,  "label = \"idx: %zd | data: %d | next: %zd | "
                 "prev: %zd\"];\n",
                 i, list->data[i], list->next[i], list->prev[i]);
