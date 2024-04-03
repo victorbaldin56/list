@@ -1,4 +1,4 @@
-#include "debug.h"
+#include "../include/debug.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "list.h"
+#include "../include/list.h"
 
 inline static FILE *CreateLogFile(char *path_to_dot_src)
 {

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "debug.h"
-#include "list.h"
+#include "../include/debug.h"
+#include "../include/list.h"
 
 static void print_int(FILE* fp, void* data)
 {
