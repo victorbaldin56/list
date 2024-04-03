@@ -26,16 +26,20 @@
  * Passing a pointer to unitialized List object will cause undefined behaiviour.
 */
 struct List {
-    int *data;      ///< data array
+    void *data;      ///< data array
     ssize_t *prev;  ///< previous indexes array
     ssize_t *next;  ///< next indexes array
     ssize_t free;   ///< the first free element of the list
-    ssize_t size;   ///< size of the list
+    ssize_t capacity;   ///< size of the list
+    size_t elem_size;
+    size_t size;
 };
 
 const int LC_BAD_ALLOC = -1;
 
-int ListCtor(struct List *list);
+#define NEW_LIST(list, type) ListCtor(list, sizeof(type))
+
+int ListCtor(struct List *list, size_t elem_size);
 
 void ListDtor(struct List *list);
 
@@ -63,16 +67,16 @@ const int LD_FILE_CREATE_FAILED = -2;
 */
 /// @{
 //* Insert a value to the tail of the given list */
-ssize_t ListInsertAtTail(struct List *list, int val);
+ssize_t ListInsertAtTail(struct List *list, const void* val);
 
 //* Insert a value to the head of the given list */
-ssize_t ListInsertAtHead(struct List *list, int val);
+ssize_t ListInsertAtHead(struct List *list, const void* val);
 
 //* Insert a value after the element with given real index */
-ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx);
+ssize_t ListInsertAfter(struct List *list, const void* val, ssize_t idx);
 
 //* @brief Insert a value before the element with given real index */
-ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx);
+ssize_t ListInsertBefore(struct List *list, const void* val, ssize_t idx);
 /// @}
 
 void ListDeleteFromHead(struct List *list);
@@ -83,8 +87,9 @@ void ListDeleteBefore(struct List *list, ssize_t idx);
 
 void ListDeleteAfter(struct List *list, ssize_t idx);
 
-ssize_t ListFind(const struct List *list, size_t elnum);
-
-ssize_t __ListSlowSlowLinearSearch__(const struct List *list, int val);
+inline void* ListGetIterator(const List* list, ssize_t idx)
+{
+    return (char*)list->data + (size_t)idx * list->elem_size;
+}
 
 #endif

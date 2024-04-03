@@ -15,20 +15,21 @@ inline static FILE *CreateLogFile(char *path_to_dot_src)
 {
     assert(path_to_dot_src);
     time_t now = time(NULL);
-    char timestamp[FILENAME_MAX] = {};
-    strftime(timestamp, FILENAME_MAX, "logs/%Y-%m-%d_%H:%M:%S",
+    char timestamp[100] = {};
+    strftime(timestamp, sizeof(timestamp), "logs/%Y-%m-%d_%H:%M:%S",
                                       gmtime(&now));
     struct timespec ts = {};
     timespec_get(&ts, TIME_UTC);
-    snprintf(path_to_dot_src, PATH_MAX, "%s.%09ld.dot",
+
+    snprintf(path_to_dot_src, PATH_MAX, "%s.%zd.dot",
                                         timestamp, ts.tv_nsec);
     return fopen(path_to_dot_src, "w");
 }
 
-static void DotDump(const struct List *list, char *path_to_dot);
+static void DotDump(const struct List *list, char *path_to_dot, PrintFunc* print_func);
 
 void ListDump(const struct List *list, const char *file, const char *func,
-              size_t line, const char *message)
+              size_t line, const char *message, PrintFunc* print_func)
 {
     assert(list);
     assert(file && func && message);
@@ -41,10 +42,10 @@ void ListDump(const struct List *list, const char *file, const char *func,
     fprintf(fp, "<h2>===============================================</br>\n"
                 "===============================================</h2>\n");
     fprintf(fp, "<h2>ListDump from function %s, %s:%zu</h2>"
-                "size = %zd</br>free = %zd\n",
-                func, file, line, list->size, list->free);
+                "size = %zu</br>capacity = %zd</br>elem_size = %zu</br>free = %zd\n",
+                func, file, line, list->size, list->capacity, list->elem_size, list->free);
     char src_filename[FILENAME_MAX] = {};
-    DotDump(list, src_filename);
+    DotDump(list, src_filename, print_func);
     long cmd_size = __sysconf(_SC_ARG_MAX);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -61,7 +62,7 @@ void ListDump(const struct List *list, const char *file, const char *func,
     return;
 }
 
-static void DotDump(const struct List *list, char *path_to_dot_src)
+static void DotDump(const struct List *list, char *path_to_dot_src, PrintFunc* print_func)
 {
     assert(path_to_dot_src);
     FILE *fp = CreateLogFile(path_to_dot_src);
@@ -72,11 +73,11 @@ static void DotDump(const struct List *list, char *path_to_dot_src)
     fprintf(fp, "digraph List {\n\trankdir = LR;\n"
                 "\tnode [shape = Mrecord];\n");
     fprintf(fp, "0 ");
-    for (ssize_t i = 0; i < list->size; i++) {
+    for (ssize_t i = 0; i < list->capacity; i++) {
         fprintf(fp, "-> %zd", i);
     }
     fprintf(fp, "[arrowsize = 0.0, weight = 100000, color = \"#FFFFFF\"];\n");
-    for (ssize_t i = 0; i < list->size; i++) {
+    for (ssize_t i = 0; i < list->capacity; i++) {
         fprintf(fp, "\t%zd [shape = Mrecord, "
                     "style = filled, ", i);
         if (list->prev[i] == -1)
@@ -86,14 +87,16 @@ static void DotDump(const struct List *list, char *path_to_dot_src)
         else
             fprintf(fp, "fillcolor = red, ");
 
-        fprintf(fp, "label = \"idx: %zd | data: %d | next: %zd | "
+        fprintf(fp, "label = \"idx: %zd | data: ", i);
+        (*print_func)(fp, ListGetIterator(list, i));
+        fprintf(fp, " | next: %zd | "
                     "prev: %zd\"];\n",
-                    i, list->data[i], list->next[i], list->prev[i]);
+                    list->next[i], list->prev[i]);
     }
-    for (ssize_t i = 0; i < list->size; i++) {
+    for (ssize_t i = 0; i < list->capacity; i++) {
         fprintf(fp, "\t%zd -> %zd;\n", i, list->next[i]);
     }
-    for (ssize_t i = 0; i < list->size; i++) {
+    for (ssize_t i = 0; i < list->capacity; i++) {
         if (list->prev[i] != -1)
             fprintf(fp, "\t%zd -> %zd;\n", i, list->prev[i]);
     }

@@ -12,14 +12,14 @@ static const int LR_BAD_REALLOC   = -1;
 
 static int ListRealloc(struct List *list, size_t newsize);
 
-static inline ssize_t ListAddValue(struct List *list, int val);
+static inline ssize_t ListAddValue(struct List *list, const void* val);
 
 static inline void ListFreeNode(struct List *list, ssize_t idx);
 
-int ListCtor(struct List *list)
+int ListCtor(struct List *list, size_t elem_size)
 {
     assert(list);
-    list->data = (int *)calloc(1, sizeof(*list->data));
+    list->data = calloc(1, elem_size);
     list->prev = (ssize_t *)calloc(1, sizeof(*list->prev));
     list->next = (ssize_t *)calloc(1, sizeof(*list->next));
     if (!list->data || !list->prev || !list->next) {
@@ -28,9 +28,11 @@ int ListCtor(struct List *list)
         free(list->next);
         return LC_BAD_ALLOC;
     }
-    list->size = 1;
+    list->elem_size = elem_size;
+    list->capacity = 1;
     list->next[0] = list->prev[0] = 0;
     list->free = 0;
+    list->size = 0;
     return 0;
 }
 
@@ -52,29 +54,29 @@ ListErrors ListVerify(const struct List *list)
         return LIST_PREV_NULL;
     if (!list->next)
         return LIST_NEXT_NULL;
-    for (ssize_t i = 0; i < list->size; i++) {
+    for (ssize_t i = 0; i < list->capacity; i++) {
         if (list->next[i] < 0)
             return LIST_NEXT_NEGATIVE;
     }
     if (list->free < 0)
         return LIST_FREE_NEGATIVE;
-    if (list->size < 0)
+    if (list->capacity < 0)
         return LIST_SIZE_NEGATIVE;
 
     return LIST_OK;
 }
 
-ssize_t ListInsertAtTail(struct List *list, int val)
+ssize_t ListInsertAtTail(struct List *list, const void* val)
 {
     return ListInsertAfter(list, val, list->prev[0]);
 }
 
-ssize_t ListInsertAtHead(struct List *list, int val)
+ssize_t ListInsertAtHead(struct List *list, const void* val)
 {
     return ListInsertBefore(list, val, list->next[0]);
 }
 
-ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx)
+ssize_t ListInsertAfter(struct List *list, const void* val, ssize_t idx)
 {
     LIST_ASSERT(list);
     ssize_t curidx = ListAddValue(list, val);
@@ -85,7 +87,7 @@ ssize_t ListInsertAfter(struct List *list, int val, ssize_t idx)
     return curidx;
 }
 
-ssize_t ListInsertBefore(struct List *list, int val, ssize_t idx)
+ssize_t ListInsertBefore(struct List *list, const void* val, ssize_t idx)
 {
     LIST_ASSERT(list);
     ssize_t curidx = ListAddValue(list, val);
@@ -124,31 +126,10 @@ void ListDeleteAfter(struct List *list, ssize_t idx)
     list->prev[delidx] = idx;
 }
 
-ssize_t ListFind(const struct List *list, size_t elnum)
-{
-    LIST_ASSERT(list);
-    ssize_t j = list->next[0];
-    for (size_t i = 0; i < elnum - 1; i++) {
-        j = list->next[j];
-    }
-    return j;
-}
-
-ssize_t __ListSlowSlowLinearSearch__(const struct List *list, int val)
-{
-    LIST_ASSERT(list);
-    ssize_t j = list->next[0];
-    for ( ; list->data[j] != val; ) {
-        j = list->next[j];
-    }
-    return j;
-}
-
 static int ListRealloc(struct List *list, size_t newsize)
 {
     LIST_ASSERT(list);
-    int *newdata     = (int *)realloc(list->data,
-                                      newsize * sizeof(*list->data));
+    void *newdata     = realloc(list->data, newsize * list->elem_size);
     ssize_t *newprev = (ssize_t *)realloc(list->prev,
                                           newsize * sizeof(*list->prev));
     ssize_t *newnext = (ssize_t *)realloc(list->next,
@@ -162,10 +143,10 @@ static int ListRealloc(struct List *list, size_t newsize)
     list->data = newdata;
     list->prev = newprev;
     list->next = newnext;
-    list->free = list->size;
+    list->free = list->capacity;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
-    for (ssize_t i = list->size; i < newsize - 1; i++) {
+    for (ssize_t i = list->capacity; i < newsize - 1; i++) {
         list->next[i] = i + 1;
         list->prev[i] = -1;
     }
@@ -173,20 +154,21 @@ static int ListRealloc(struct List *list, size_t newsize)
     list->next[newsize - 1] = 0;
     list->prev[newsize - 1] = -1;
 
-    list->size = (ssize_t)newsize;
+    list->capacity = (ssize_t)newsize;
     return 0;
 }
 
-static inline ssize_t ListAddValue(struct List *list, int val)
+static inline ssize_t ListAddValue(struct List *list, const void* val)
 {
     LIST_ASSERT(list);
     if (!list->free) {
-        if (ListRealloc(list, (size_t)list->size * REALLOC_COEFF) != 0)
+        if (ListRealloc(list, (size_t)list->capacity * REALLOC_COEFF) != 0)
             return 0;
     }
     ssize_t curidx = list->free;
     list->free = list->next[curidx];
-    list->data[curidx] = val;
+    ++list->size;
+    memcpy(ListGetIterator(list, curidx), val, list->elem_size);
     return curidx;
 }
 
@@ -194,6 +176,7 @@ static inline void ListFreeNode(struct List *list, ssize_t idx)
 {
     LIST_ASSERT(list);
     list->prev[idx] = -1;
+    --list->size;
     list->next[idx] = list->free;
     list->free = idx;
 }
