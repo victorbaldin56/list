@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #include "debug.h"
 
@@ -89,7 +90,32 @@ void ListDeleteAfter(struct List *list, ssize_t idx);
 
 inline void* ListGetIterator(const List* list, ssize_t idx)
 {
+    if (idx < 0)
+        return nullptr;
     return (char*)list->data + (size_t)idx * list->elem_size;
+}
+
+inline List* ListNewArray(size_t n, size_t elem_size)
+{
+    List* lists = (List*)calloc(n, sizeof(*lists));
+    if (!lists)
+        return nullptr;
+
+    for (size_t i = 0; i < n; ++i) {
+        if (ListCtor(lists + i, elem_size) != 0) {
+            free(lists);
+            return nullptr;
+        }
+    }
+
+    return lists;
+}
+
+inline void ListDeleteArray(List* lists, size_t n)
+{
+    for (size_t i = 0; i < n; ++i)
+        ListDtor(lists + i);
+    free(lists);
 }
 
 #endif
